@@ -10,16 +10,22 @@ app.use(express.json());
 // 🛠 CORS Middleware Mejorado
 // ---------------------------------------------------
 app.use((req, res, next) => {
-  res.header('Access-Control-Allow-Origin', '*'); // Permitir todos los orígenes
+  // Use an explicit safe list for CORS headers to avoid invalid values
+  res.header('Access-Control-Allow-Origin', '*');
   res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
   res.header(
     'Access-Control-Allow-Headers',
-    req.header('Access-Control-Request-Headers') || 'Content-Type'
+    'Content-Type, Authorization, Accept'
   );
+  res.header('Access-Control-Expose-Headers', 'Content-Length, X-Kuma-Revision');
+  // If you ever use credentials, set this to 'true' and echo origin instead of '*'
+  res.header('Access-Control-Allow-Credentials', 'false');
 
   if (req.method === 'OPTIONS') {
-    return res.sendStatus(200);
+    // Respond to preflight with 204 No Content and the CORS headers
+    return res.status(204).end();
   }
+
   next();
 });
 
