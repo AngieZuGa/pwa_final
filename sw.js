@@ -10,6 +10,7 @@ const URLS_TO_CACHE = [
   "/styles.css",
   "/app.js",
   "/manifest.json",
+  "/offline.html",
 ];
 
 // ===============================================
@@ -18,8 +19,39 @@ const URLS_TO_CACHE = [
 self.addEventListener("install", (event) => {
   console.log("📦 Service Worker instalado");
 
+  // Precaching: try to cache each resource individually and tolerate failures
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(URLS_TO_CACHE))
+    (async () => {
+      const cache = await caches.open(CACHE_NAME);
+
+      // Keep only http(s) urls and ignore malformed or unsupported schemes
+      const filtered = URLS_TO_CACHE.filter((u) => {
+        try {
+          const full = new URL(u, self.location.href);
+          return full.protocol === "http:" || full.protocol === "https:";
+        } catch (e) {
+          return false;
+        }
+      });
+
+      // Fetch+put each resource; use allSettled so one failure doesn't reject install
+      const results = await Promise.allSettled(
+        filtered.map(async (url) => {
+          try {
+            const res = await fetch(url, { cache: "no-cache" });
+            if (!res || !res.ok) throw new Error("Bad response");
+            await cache.put(url, res.clone());
+            return { url, ok: true };
+          } catch (err) {
+            console.warn("Service Worker precache failed for:", url, err);
+            return { url, ok: false };
+          }
+        })
+      );
+
+      // Optional: log results in dev for easier debugging
+      console.log("Precache results:", results);
+    })()
   );
 
   self.skipWaiting();
