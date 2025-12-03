@@ -1,5 +1,2 @@
-{
-  "version": 2,
-  "buildCommand": "cd .. && npm install"
-}
+# This file is deprecated; use /vercel.json at project root instead
 
