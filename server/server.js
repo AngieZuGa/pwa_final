@@ -122,8 +122,10 @@ app.post('/sendNotification', async (req, res) => {
 // ---------------------------------------------------
 // 🚀 Levantar servidor (local)
 // ---------------------------------------------------
-const PORT = process.env.PORT || 4000;
-app.listen(PORT, () => console.log(`Push server running on http://localhost:${PORT}`));
+if (process.env.NODE_ENV !== 'production') {
+  const PORT = process.env.PORT || 4000;
+  app.listen(PORT, () => console.log(`Push server running on http://localhost:${PORT}`));
+}
 
-// Exportar para Vercel
+// Exportar para Vercel (serverless)
 module.exports = app;

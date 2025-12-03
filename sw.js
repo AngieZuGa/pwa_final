@@ -1,214 +1,128 @@
-// Service Worker - sw.js
-const CACHE_NAME = 'pwa-cache-v1';
-const RUNTIME_CACHE = 'pwa-runtime-cache-v1';
+// ===============================================
+// 📌 Nombre de los cachés
+// ===============================================
+const CACHE_NAME = "pwa-cache-v1";
+const RUNTIME_CACHE = "pwa-runtime-cache-v1";
 
 const URLS_TO_CACHE = [
-    '/',
-    '/index.html',
-    '/styles.css',
-    '/app.js',
-    '/manifest.json',
+  "/",
+  "/index.html",
+  "/styles.css",
+  "/app.js",
+  "/manifest.json",
 ];
 
-// -----------------------------
-//  INSTALL
-// -----------------------------
-self.addEventListener('install', event => {
-    console.log('📦 Service Worker instalándose...');
+// ===============================================
+// 📌 INSTALACIÓN DEL SW
+// ===============================================
+self.addEventListener("install", (event) => {
+  console.log("📦 Service Worker instalado");
 
-    event.waitUntil(
-        caches.open(CACHE_NAME)
-            .then(cache => {
-                console.log('📦 Archivos en caché');
-                return cache.addAll(URLS_TO_CACHE);
-            })
-            .then(() => self.skipWaiting())
-    );
+  event.waitUntil(
+    caches.open(CACHE_NAME).then((cache) => cache.addAll(URLS_TO_CACHE))
+  );
+
+  self.skipWaiting();
 });
 
-// -----------------------------
-//  ACTIVATE
-// -----------------------------
-self.addEventListener('activate', event => {
-    console.log('🚀 Service Worker activado');
+// ===============================================
+// 📌 ACTIVACIÓN DEL SW
+// ===============================================
+self.addEventListener("activate", (event) => {
+  console.log("🚀 Service Worker activado");
 
-    event.waitUntil(
-        caches.keys().then(cacheNames => {
-            return Promise.all(
-                cacheNames.map(cacheName => {
-                    if (cacheName !== CACHE_NAME && cacheName !== RUNTIME_CACHE) {
-                        console.log('🗑️ Eliminando caché antiguo:', cacheName);
-                        return caches.delete(cacheName);
-                    }
-                })
-            );
-        }).then(() => self.clients.claim())
-    );
+  event.waitUntil(
+    caches.keys().then((keys) =>
+      Promise.all(
+        keys
+          .filter((key) => key !== CACHE_NAME && key !== RUNTIME_CACHE)
+          .map((key) => caches.delete(key))
+      )
+    )
+  );
+
+  self.clients.claim();
 });
 
-// -----------------------------
-//  FETCH
-// -----------------------------
-self.addEventListener('fetch', event => {
-    const request = event.request;
-    const url = new URL(request.url);
+// ===============================================
+// 📌 INTERCEPTAR REQUESTS
+// ===============================================
+self.addEventListener("fetch", (event) => {
+  const req = event.request;
 
-    // ❗ Evitar error de chrome-extension://, data:, blob:, file:, etc.
-    if (!url.protocol.startsWith('http')) {
-        return; // No interceptar ni cachear
-    }
+  // ❌ No cachear extensiones (arregla el error chrome-extension)
+  if (req.url.startsWith("chrome-extension://")) return;
 
-    // No procesar métodos distintos de GET
-    if (request.method !== 'GET') {
-        return;
-    }
+  // ❌ No cachear APIs de Vercel (push server)
+  if (req.url.includes("/api/")) return;
 
-    // API externa con estrategia Network First
-    if (request.url.includes('jsonplaceholder.typicode.com')) {
-        event.respondWith(
-            fetch(request)
-                .then(response => {
-                    if (response.ok) {
-                        const clone = response.clone();
-                        caches.open(RUNTIME_CACHE).then(cache => {
-                            cache.put(request, clone);
-                        });
-                    }
-                    return response;
-                })
-                .catch(() => caches.match(request).then(res => res || createOfflineResponse()))
-        );
-        return;
-    }
+  // Solo manejar GET
+  if (req.method !== "GET") return;
 
-    // Estrategia Cache First para archivos locales
-    event.respondWith(
-        caches.match(request).then(cachedResponse => {
-            if (cachedResponse) return cachedResponse;
+  event.respondWith(
+    caches.match(req).then((cached) => {
+      if (cached) return cached;
 
-            return fetch(request)
-                .then(response => {
-                    if (!response || response.status !== 200) {
-                        return response;
-                    }
-
-                    const responseClone = response.clone();
-                    caches.open(RUNTIME_CACHE).then(cache => {
-                        cache.put(request, responseClone);
-                    });
-
-                    return response;
-                })
-                .catch(() => createOfflineResponse());
+      return fetch(req)
+        .then((res) => {
+          return caches.open(RUNTIME_CACHE).then((cache) => {
+            cache.put(req, res.clone());
+            return res;
+          });
         })
-    );
+        .catch(() => caches.match("/offline.html"));
+    })
+  );
 });
 
-// -----------------------------
-//  MODO OFFLINE
-// -----------------------------
-function createOfflineResponse() {
-    return new Response(
-        '<h1>Modo Offline</h1><p>No tienes conexión a internet.</p>',
-        {
-            status: 200,
-            headers: { 'Content-Type': 'text/html; charset=UTF-8' }
+// ===============================================
+// 📌 MANEJO DE PUSH NOTIFICATIONS
+// ===============================================
+self.addEventListener("push", (event) => {
+  console.log("📨 Push recibido:", event.data ? event.data.text() : "sin datos");
+
+  let data = {};
+  try {
+    data = event.data.json();
+  } catch (e) {
+    console.warn("Push sin JSON válido");
+  }
+
+  const title = data.title || "Notificación";
+  const options = {
+    body: data.body || "Nuevo mensaje",
+    icon: "/icons/icon-192x192.png",
+    badge: "/icons/icon-72x72.png",
+    data: data.data || {},
+    actions: [
+      { action: "open", title: "Abrir" },
+      { action: "close", title: "Cerrar" },
+    ],
+  };
+
+  event.waitUntil(self.registration.showNotification(title, options));
+});
+
+// ===============================================
+// 📌 CLICK EN NOTIFICACIONES
+// ===============================================
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close();
+
+  if (event.action === "close") return;
+
+  event.waitUntil(
+    clients.matchAll({ type: "window" }).then((clientList) => {
+      const url = "/";
+
+      // Abrir o enfocar pestaña
+      for (const client of clientList) {
+        if (client.url.includes(url) && "focus" in client) {
+          return client.focus();
         }
-    );
-}
+      }
 
-// -----------------------------
-//  BACKGROUND SYNC
-// -----------------------------
-self.addEventListener('sync', event => {
-    if (event.tag === 'sync-posts') {
-        event.waitUntil(syncData());
-    }
-});
-
-async function syncData() {
-    try {
-        const response = await fetch('https://jsonplaceholder.typicode.com/posts?_limit=10');
-        const data = await response.json();
-        const cache = await caches.open(RUNTIME_CACHE);
-
-        await cache.put(
-            'https://jsonplaceholder.typicode.com/posts?_limit=10',
-            new Response(JSON.stringify(data))
-        );
-
-    } catch (error) {
-        console.error('❌ Error en sincronización:', error);
-    }
-}
-
-// -----------------------------
-//  PUSH NOTIFICATIONS
-// -----------------------------
-self.addEventListener('push', event => {
-    let payload = { title: 'Notificación', body: 'Tienes una nueva notificación.' };
-
-    try {
-        if (event.data) {
-            payload = event.data.json();
-        }
-    } catch (e) {
-        console.error('Error parseando payload push:', e);
-    }
-
-    const title = payload.title || 'Mi PWA';
-    const options = {
-        body: payload.body || '',
-        icon: payload.icon || '/assets/image.png',
-        badge: payload.badge || '/assets/image.png',
-        data: payload.data || {},
-        tag: payload.tag
-    };
-
-    event.waitUntil(
-        self.registration.showNotification(title, options)
-    );
-});
-
-// -----------------------------
-//  CLICK EN NOTIFICACIÓN
-// -----------------------------
-self.addEventListener('notificationclick', event => {
-    event.notification.close();
-
-    const urlToOpen = event.notification.data?.url || '/';
-
-    event.waitUntil(
-        clients.matchAll({ type: 'window', includeUncontrolled: true })
-            .then(windowClients => {
-                for (const client of windowClients) {
-                    if (client.url === urlToOpen && 'focus' in client) {
-                        return client.focus();
-                    }
-                }
-                if (clients.openWindow) {
-                    return clients.openWindow(urlToOpen);
-                }
-            })
-    );
-});
-
-// -----------------------------
-//  CAMBIO DE SUSCRIPCIÓN
-// -----------------------------
-self.addEventListener('pushsubscriptionchange', event => {
-    console.log('🔄 pushsubscriptionchange detectado:', event);
-
-    event.waitUntil((async () => {
-        try {
-            // Aquí podrías volver a suscribir al usuario y enviarlo al servidor
-            const newSub = await self.registration.pushManager.subscribe(event.oldSubscription.options);
-
-            console.log('Nueva suscripción generada:', newSub);
-
-            // TODO: enviar newSub al backend
-        } catch (err) {
-            console.error('Error en pushsubscriptionchange:', err);
-        }
-    })());
+      if (clients.openWindow) return clients.openWindow(url);
+    })
+  );
 });
