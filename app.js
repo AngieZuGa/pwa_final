@@ -50,12 +50,15 @@ function updateSWStatus(active) {
 // API Configuration
 const API_BASE = 'https://jsonplaceholder.typicode.com';
 
-// Push Server Configuration (cambia a tu URL de Vercel en producción)
-// Desarrollo: http://localhost:4000
-// Producción: https://tu-proyecto-vercel.vercel.app
-const PUSH_SERVER = typeof window !== 'undefined' && window.location.hostname === 'localhost'
-  ? 'http://localhost:4000'
-  : (window.PUSH_SERVER_URL || 'http://localhost:4000'); // Define window.PUSH_SERVER_URL antes de cargar app.js si quieres override
+// -------------------------------------------------------------
+// 🔥 CONFIGURACIÓN PUSH SERVER (LOCAL + PRODUCCIÓN VERCEL)
+// -------------------------------------------------------------
+const PUSH_SERVER =
+    window.location.hostname === 'localhost'
+        ? 'http://localhost:4000'
+        : 'https://pwa-final-beta.vercel.app';
+
+// -------------------------------------------------------------
 
 // Sistema de Pestañas
 document.querySelectorAll('.tab-btn').forEach(btn => {
@@ -66,15 +69,12 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
 });
 
 function switchTab(tabName) {
-    // Remover clase active de todos los botones y contenidos
     document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
     document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
 
-    // Agregar clase active al elemento seleccionado
     document.querySelector(`[data-tab="${tabName}"]`).classList.add('active');
     document.getElementById(tabName).classList.add('active');
 
-    // Cargar contenido según la pestaña
     if (tabName === 'posts') loadPosts();
     if (tabName === 'usuarios') loadUsers();
 }
@@ -287,7 +287,6 @@ async function subscribeForPush() {
     }
 
     const registration = await navigator.serviceWorker.ready;
-    // Intentar obtener la clave pública desde el servidor
     const publicKey = await getVapidPublicKey();
     if (!publicKey) {
         updatePushStatus('Falta clave VAPID');
@@ -301,7 +300,6 @@ async function subscribeForPush() {
             applicationServerKey: urlBase64ToUint8Array(publicKey)
         });
 
-        // Enviar la suscripción al servidor
         await fetch(`${PUSH_SERVER}/subscribe`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -322,12 +320,17 @@ async function sendTestPush() {
         const resp = await fetch(`${PUSH_SERVER}/sendNotification`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ title: 'Prueba', body: 'Notificación de prueba desde el servidor' })
+            body: JSON.stringify({
+                title: 'Prueba',
+                body: 'Notificación de prueba desde el servidor'
+            })
         });
+
         if (!resp.ok) throw new Error('Error al enviar notificación');
-        showToast('Solicitud de envío de notificación enviada', 'success');
+
+        showToast('Solicitud enviada', 'success');
     } catch (err) {
-        console.error('Error enviando notificación de prueba:', err);
+        console.error('Error enviando notificación:', err);
         showToast('Error al solicitar notificación de prueba', 'error');
     }
 }
@@ -336,18 +339,29 @@ function updatePushStatus(text) {
     const el = document.getElementById('pushStatus');
     if (!el) return;
     el.textContent = text;
-    if (text === 'Suscrito') el.className = 'status-badge active';
-    else if (text === 'Denegado' || text === 'Error') el.className = 'status-badge offline';
-    else el.className = 'status-badge';
+
+    if (text === 'Suscrito') {
+        el.className = 'status-badge active';
+    } else if (text === 'Denegado' || text === 'Error') {
+        el.className = 'status-badge offline';
+    } else {
+        el.className = 'status-badge';
+    }
 }
 
-// Botones de la UI
+// Botones
 document.addEventListener('DOMContentLoaded', () => {
     const enableBtn = document.getElementById('enablePushBtn');
     const testBtn = document.getElementById('sendTestPushBtn');
+
     if (enableBtn) enableBtn.addEventListener('click', subscribeForPush);
     if (testBtn) testBtn.addEventListener('click', sendTestPush);
 
-    // Mostrar estado inicial
-    if (Notification && Notification.permission) updatePushStatus(Notification.permission === 'granted' ? 'Permiso concedido' : Notification.permission);
+    if (Notification && Notification.permission) {
+        updatePushStatus(
+            Notification.permission === 'granted'
+                ? 'Permiso concedido'
+                : Notification.permission
+        );
+    }
 });
