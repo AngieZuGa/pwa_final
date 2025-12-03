@@ -53,10 +53,14 @@ const API_BASE = 'https://jsonplaceholder.typicode.com';
 // -------------------------------------------------------------
 // 🔥 CONFIGURACIÓN PUSH SERVER (LOCAL + PRODUCCIÓN VERCEL)
 // -------------------------------------------------------------
+// Allow overriding the push server URL at build/runtime by setting
+// `window.PUSH_SERVER_URL` in `index.html`. Falls back to localhost for
+// local dev and the default Vercel URL otherwise.
 const PUSH_SERVER =
-    window.location.hostname === 'localhost'
+    (typeof window !== 'undefined' && window.PUSH_SERVER_URL) ||
+    (window.location.hostname === 'localhost'
         ? 'http://localhost:4000'
-        : 'https://pwa-final-beta.vercel.app';
+        : 'https://pwa-final-beta.vercel.app');
 
 // -------------------------------------------------------------
 
