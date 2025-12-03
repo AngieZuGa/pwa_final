@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Documentación - PWA</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.6;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 2rem;
+            background: #f5f5f5;
+            color: #333;
+        }
+        
+        h1, h2, h3 {
+            color: #3498db;
+        }
+        
+        code {
+            background: #f0f0f0;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+        }
+        
+        pre {
+            background: #2c3e50;
+            color: #ecf0f1;
+            padding: 1.5rem;
+            border-radius: 8px;
+            overflow-x: auto;
+            line-height: 1.5;
+        }
+        
+        .section {
+            background: white;
+            padding: 1.5rem;
+            margin: 1rem 0;
+            border-radius: 8px;
+            border-left: 4px solid #3498db;
+        }
+        
+        .example {
+            background: #f9f9f9;
+            padding: 1rem;
+            border-radius: 5px;
+            margin: 1rem 0;
+            border: 1px solid #ddd;
+        }
+    </style>
+</head>
+<body>
+    <h1>📚 Documentación - PWA con Pestañas</h1>
+    
+    <div class="section">
+        <h2>🚀 Guía Rápida</h2>
+        <ol>
+            <li>Abre una terminal en la carpeta del proyecto</li>
+            <li>Ejecuta: <code>python start_server.bat</code> (Windows) o <code>python -m http.server 8000</code></li>
+            <li>Accede a: <code>http://localhost:8000</code></li>
+            <li>¡Listo! La PWA está corriendo</li>
+        </ol>
+    </div>
+    
+    <div class="section">
+        <h2>📝 Agregar una Nueva Pestaña</h2>
+        
+        <h3>Paso 1: Agregar botón en HTML</h3>
+        <pre>&lt;button class="tab-btn" data-tab="mi-pestaña"&gt;📌 Mi Pestaña&lt;/button&gt;</pre>
+        
+        <h3>Paso 2: Agregar contenido</h3>
+        <pre>&lt;section class="tab-content" id="mi-pestaña"&gt;
+    &lt;div class="content-wrapper"&gt;
+        &lt;h2&gt;Mi Pestaña&lt;/h2&gt;
+        &lt;div class="card"&gt;
+            &lt;p&gt;Contenido aquí...&lt;/p&gt;
+        &lt;/div&gt;
+    &lt;/div&gt;
+&lt;/section&gt;</pre>
+        
+        <h3>Paso 3: Agregar lógica en JavaScript (opcional)</h3>
+        <pre>// En app.js, dentro de la función switchTab():
+if (tabName === 'mi-pestaña') {
+    loadMiPestaña(); // Tu función personalizada
+}</pre>
+    </div>
+    
+    <div class="section">
+        <h2>🔗 Cambiar la API</h2>
+        
+        <h3>Usar otra API REST</h3>
+        <pre>// En app.js, modifica:
+const API_BASE = 'https://api.ejemplo.com';
+
+// Crear una nueva función para cargar datos:
+async function loadMiDato() {
+    try {
+        const response = await fetch(`${API_BASE}/mi-endpoint`);
+        const data = await response.json();
+        
+        // Procesar data...
+        console.log(data);
+    } catch (error) {
+        console.error('Error:', error);
+        showToast('Error al cargar datos', 'error');
+    }
+}</pre>
+        
+        <h3>APIs gratuitas sin autenticación</h3>
+        <ul>
+            <li><strong>JSONPlaceholder:</strong> <code>https://jsonplaceholder.typicode.com</code> (posts, usuarios, comentarios)</li>
+            <li><strong>OpenWeather (sin clave):</strong> <code>https://api.open-meteo.com</code> (clima)</li>
+            <li><strong>IP Geolocation:</strong> <code>https://ipapi.co</code> (ubicación)</li>
+            <li><strong>REST Countries:</strong> <code>https://restcountries.com</code> (países)</li>
+            <li><strong>PokéAPI:</strong> <code>https://pokeapi.co</code> (Pokémon)</li>
+            <li><strong>Giphy (sin clave):</strong> <code>https://api.giphy.com</code> (GIFs)</li>
+            <li><strong>CoinGecko:</strong> <code>https://api.coingecko.com</code> (criptomonedas)</li>
+        </ul>
+    </div>
+    
+    <div class="section">
+        <h2>🎨 Personalizar Colores</h2>
+        
+        <pre>/* En styles.css, modifica :root */
+:root {
+    --primary-color: #3498db;      /* Azul */
+    --secondary-color: #2ecc71;    /* Verde */
+    --danger-color: #e74c3c;       /* Rojo */
+    --dark-bg: #1a1a1a;
+    --light-bg: #ecf0f1;
+    --card-bg: #ffffff;
+    --text-color: #2c3e50;
+}</pre>
+        
+        <div class="example">
+            <strong>Combinaciones recomendadas:</strong>
+            <ul>
+                <li>Azul: <code>#3498db</code> + Verde: <code>#2ecc71</code></li>
+                <li>Púrpura: <code>#9b59b6</code> + Rosa: <code>#e91e63</code></li>
+                <li>Naranja: <code>#e67e22</code> + Rojo: <code>#c0392b</code></li>
+                <li>Verde: <code>#27ae60</code> + Azul: <code>#2980b9</code></li>
+            </ul>
+        </div>
+    </div>
+    
+    <div class="section">
+        <h2>🔄 Sincronización en Background</h2>
+        
+        <pre>// Registrar Background Sync
+if ('serviceWorker' in navigator && 'SyncManager' in window) {
+    navigator.serviceWorker.ready.then(registration => {
+        registration.sync.register('sync-posts');
+    });
+}</pre>
+    </div>
+    
+    <div class="section">
+        <h2>📢 Notificaciones Push</h2>
+        
+        <pre>// Solicitar permisos
+Notification.requestPermission().then(permission => {
+    if (permission === 'granted') {
+        new Notification('Mi PWA', {
+            body: '¡Hola desde mi app!',
+            icon: 'mi-icono.png'
+        });
+    }
+});</pre>
+    </div>
+    
+    <div class="section">
+        <h2>💾 Almacenamiento Local</h2>
+        
+        <pre>// Guardar datos
+localStorage.setItem('miDato', JSON.stringify(data));
+
+// Obtener datos
+const data = JSON.parse(localStorage.getItem('miDato'));
+
+// IndexedDB (para más datos)
+const db = await idb.open('mi-db', 1, db => {
+    db.createObjectStore('posts', { keyPath: 'id' });
+});</pre>
+    </div>
+    
+    <div class="section">
+        <h2>🎯 Estructura de Carpetas Avanzada</h2>
+        
+        <pre>pwa_final/
+├── index.html           # Página principal
+├── styles.css
+│   ├── main.css
+│   ├── responsive.css
+│   └── themes.css
+├── js/
+│   ├── app.js
+│   ├── api.js
+│   ├── storage.js
+│   └── utils.js
+├── sw.js               # Service Worker
+├── manifest.json       # Configuración PWA
+├── assets/
+│   ├── icons/
+│   ├── images/
+│   └── fonts/
+├── pages/
+│   ├── inicio.html
+│   ├── posts.html
+│   ├── usuarios.html
+│   └── configuracion.html
+└── README.md</pre>
+    </div>
+    
+    <div class="section">
+        <h2>🚨 Debugging</h2>
+        
+        <h3>Abrir Developer Tools</h3>
+        <ul>
+            <li><strong>Chrome/Edge:</strong> F12 o Ctrl+Shift+J</li>
+            <li><strong>Firefox:</strong> F12 o Ctrl+Shift+I</li>
+            <li><strong>Safari:</strong> Cmd+Option+I</li>
+        </ul>
+        
+        <h3>Ver Service Worker</h3>
+        <pre>chrome://inspect/#service-workers  // Chrome
+about:debugging#/runtime/this-firefox  // Firefox</pre>
+        
+        <h3>Ver Application</h3>
+        <pre>DevTools → Application → Service Workers
+DevTools → Application → Cache Storage
+DevTools → Application → Local Storage</pre>
+    </div>
+    
+    <div class="section">
+        <h2>📦 Empaquetado para Producción</h2>
+        
+        <h3>Checklist</h3>
+        <ul>
+            <li>✅ HTTPS habilitado</li>
+            <li>✅ manifest.json completo</li>
+            <li>✅ Icons en múltiples tamaños</li>
+            <li>✅ Service Worker actualizado</li>
+            <li>✅ Optimizar imágenes</li>
+            <li>✅ Minificar CSS/JS</li>
+            <li>✅ Headers correctos (cache-control, etc.)</li>
+            <li>✅ Probar en múltiples dispositivos</li>
+        </ul>
+    </div>
+    
+    <div class="section">
+        <h2>🌐 Desplegar a Internet</h2>
+        
+        <h3>Opciones gratuitas:</h3>
+        <ul>
+            <li><strong>GitHub Pages:</strong> Gratis, HTTPS incluído, perfecto para PWAs</li>
+            <li><strong>Vercel:</strong> Deploy automático, CDN global</li>
+            <li><strong>Netlify:</strong> Simple, previsualización, formularios</li>
+            <li><strong>Firebase Hosting:</strong> Buena performance, analytics</li>
+            <li><strong>Heroku (Free Tier):</strong> Para backend + frontend</li>
+        </ul>
+        
+        <h3>Con GitHub Pages</h3>
+        <pre>1. Crea repositorio en GitHub
+2. Sube los archivos
+3. Ve a Settings → Pages
+4. Selecciona "Deploy from branch"
+5. ¡Listo! Tu PWA está en producción</pre>
+    </div>
+    
+    <div class="section">
+        <h2>📚 Recursos Útiles</h2>
+        <ul>
+            <li><a href="https://developer.mozilla.org/en-US/docs/Web/Progressive_web_apps" target="_blank">MDN - PWA Guide</a></li>
+            <li><a href="https://web.dev/progressive-web-apps/" target="_blank">Google - PWA Essentials</a></li>
+            <li><a href="https://developers.google.com/web/tools/lighthouse" target="_blank">Google Lighthouse</a></li>
+            <li><a href="https://manifest-gen.netlify.app/" target="_blank">Web Manifest Generator</a></li>
+            <li><a href="https://www.pwabuilder.com/" target="_blank">PWA Builder</a></li>
+        </ul>
+    </div>
+
+</body>
+</html>

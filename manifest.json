@@ -1,0 +1,76 @@
+{
+  "name": "Mi PWA Final",
+  "short_name": "Mi PWA",
+  "description": "Una Progressive Web App con pestañas e integración de API",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#ffffff",
+  "theme_color": "#3498db",
+  "screenshots": [
+    {
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 540 720'><rect fill='%233498db' width='540' height='720'/><text x='50%' y='50%' font-size='80' fill='white' text-anchor='middle' dy='.3em'>PWA</text></svg>",
+      "sizes": "540x720",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1080 1440'><rect fill='%233498db' width='1080' height='1440'/><text x='50%' y='50%' font-size='160' fill='white' text-anchor='middle' dy='.3em'>PWA</text></svg>",
+      "sizes": "1080x1440",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ],
+  "icons": [
+    {
+      "src": "assets/image.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "assets/image.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ],
+  "categories": ["productivity"],
+  "shortcuts": [
+    {
+      "name": "Ver Posts",
+      "short_name": "Posts",
+      "description": "Ver los últimos posts",
+      "url": "/?tab=posts",
+      "icons": [
+        {
+          "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 96 96'><rect fill='%233498db' width='96' height='96'/><text x='50%' y='50%' font-size='60' fill='white' text-anchor='middle' dy='.3em'>📝</text></svg>",
+          "sizes": "96x96"
+        }
+      ]
+    },
+    {
+      "name": "Ver Usuarios",
+      "short_name": "Usuarios",
+      "description": "Ver lista de usuarios",
+      "url": "/?tab=usuarios",
+      "icons": [
+        {
+          "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 96 96'><rect fill='%233498db' width='96' height='96'/><text x='50%' y='50%' font-size='60' fill='white' text-anchor='middle' dy='.3em'>👥</text></svg>",
+          "sizes": "96x96"
+        }
+      ]
+    }
+  ],
+  "share_target": {
+    "action": "/share",
+    "method": "POST",
+    "enctype": "multipart/form-data",
+    "params": {
+      "title": "title",
+      "text": "text",
+      "url": "url"
+    }
+  }
+}

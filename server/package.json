@@ -1,0 +1,14 @@
+{
+  "name": "pwa-push-server-example",
+  "version": "1.0.0",
+  "description": "Example server to handle push subscriptions and send notifications (uses web-push)",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "gen:vapid": "node generate_vapid.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "web-push": "^3.5.0"
+  }
+}
