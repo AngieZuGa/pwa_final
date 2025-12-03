@@ -262,10 +262,30 @@ function urlBase64ToUint8Array(base64String) {
 
 async function getVapidPublicKey() {
     try {
-        const resp = await fetch(`${PUSH_SERVER}/vapidPublicKey`);
-        if (!resp.ok) throw new Error('No VAPID key available');
-        const data = await resp.json();
-        return data.publicKey;
+        // Try the serverless /api/vapidPublicKey endpoint first (works reliably on Vercel)
+        // Then fallback to /vapidPublicKey on the main server
+        const endpoints = [
+            `${PUSH_SERVER}/api/vapidPublicKey`,  // Vercel serverless function
+            `${PUSH_SERVER}/vapidPublicKey`        // Fallback to main server endpoint
+        ];
+
+        for (const endpoint of endpoints) {
+            try {
+                const resp = await fetch(endpoint);
+                if (resp.ok) {
+                    const data = await resp.json();
+                    if (data.publicKey) {
+                        console.log('✓ VAPID public key fetched from:', endpoint);
+                        return data.publicKey;
+                    }
+                }
+            } catch (err) {
+                console.warn('Failed to fetch VAPID from:', endpoint, err.message);
+                continue;
+            }
+        }
+
+        throw new Error('No VAPID key available from any endpoint');
     } catch (err) {
         console.warn('No se obtuvo VAPID key desde el servidor:', err.message);
         return null;
