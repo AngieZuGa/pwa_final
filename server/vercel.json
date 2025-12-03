@@ -1,2 +1,4 @@
-# This file is deprecated; use /vercel.json at project root instead
+{
+  "version": 2
+}
 
