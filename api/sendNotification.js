@@ -10,10 +10,7 @@ function setCorsHeaders(res) {
   res.setHeader('Access-Control-Expose-Headers', 'Content-Length');
 }
 
-// In-memory subscription store (same as subscribe.js, but shared via require in production)
-let subscriptions = [];
-
-// Initialize VAPID keys on first call
+// Initialize VAPID keys (loaded once)
 let vapidKeysInitialized = false;
 
 function initVapidKeys() {
@@ -21,86 +18,86 @@ function initVapidKeys() {
 
   try {
     const vapidPath = path.join(__dirname, '..', 'server', 'vapid.json');
-    
-    if (fs.existsSync(vapidPath)) {
-      const vapidData = JSON.parse(fs.readFileSync(vapidPath, 'utf8'));
-      
-      if (vapidData.publicKey && vapidData.privateKey) {
-        webpush.setVapidDetails(
-          'mailto:example@example.com',
-          vapidData.publicKey,
-          vapidData.privateKey
-        );
-        console.log('[sendNotification] VAPID keys initialized from vapid.json');
-        vapidKeysInitialized = true;
-      }
-    } else {
-      console.warn('[sendNotification] vapid.json not found');
+
+    if (!fs.existsSync(vapidPath)) {
+      console.error('[sendNotification] ❌ ERROR: vapid.json NOT FOUND.');
+      return;
     }
+
+    const { publicKey, privateKey } = JSON.parse(fs.readFileSync(vapidPath, 'utf8'));
+
+    if (!publicKey || !privateKey) {
+      console.error('[sendNotification] ❌ ERROR: vapid.json incomplete.');
+      return;
+    }
+
+    webpush.setVapidDetails(
+      'mailto:example@example.com',
+      publicKey,
+      privateKey
+    );
+
+    vapidKeysInitialized = true;
+    console.log('[sendNotification] ✓ VAPID keys initialized');
   } catch (err) {
-    console.error('[sendNotification] Error initializing VAPID keys:', err.message);
+    console.error('[sendNotification] Error reading VAPID keys:', err.message);
   }
 }
 
 module.exports = async (req, res) => {
   setCorsHeaders(res);
 
-  // Handle preflight
+  // Handle OPTIONS (preflight)
   if (req.method === 'OPTIONS') {
     return res.status(204).end();
   }
 
-  // Only allow POST
+  // Accept only POST
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
   try {
-    // Initialize VAPID keys if not already done
     initVapidKeys();
-
-    const { title = 'Mi PWA', body = 'Notificación desde servidor', data = {} } = req.body;
 
     if (!vapidKeysInitialized) {
       return res.status(500).json({ error: 'VAPID keys not configured' });
     }
 
-    // Get subscriptions from subscribe.js module if available
-    // Otherwise use in-memory array (won't persist across invocations in production)
-    let subs = subscriptions;
-    try {
-      const subscribeModule = require('./subscribe');
-      subs = subscribeModule.getSubscriptions ? subscribeModule.getSubscriptions() : subscriptions;
-    } catch (e) {
-      console.warn('[sendNotification] Could not access subscribe module');
+    // Extract subscription and payload
+    const {
+      subscription,
+      title = 'Mi PWA',
+      body = 'Notificación desde servidor',
+      data = {}
+    } = req.body;
+
+    // Validate subscription
+    if (!subscription) {
+      console.error('[sendNotification] ❌ No subscription in request body');
+      return res.status(400).json({ error: 'Subscription missing' });
     }
 
-    if (!subs || subs.length === 0) {
-      return res.status(400).json({ error: 'No subscriptions available' });
-    }
-
+    // Build payload
     const payload = JSON.stringify({ title, body, data });
-    const results = [];
 
-    // Send notifications to all subscriptions
-    await Promise.all(
-      subs.map(async (sub, idx) => {
-        try {
-          await webpush.sendNotification(sub, payload);
-          results.push({ idx, endpoint: sub.endpoint?.substring(0, 50) + '...', status: 'ok' });
-          console.log(`[sendNotification] Notification sent to subscription ${idx}`);
-        } catch (err) {
-          console.error(`[sendNotification] Error sending to subscription ${idx}:`, err.message);
-          results.push({ idx, status: 'error', error: err.message });
-        }
-      })
-    );
+    console.log('[sendNotification] → Sending push to ONE subscription');
 
+    // Try sending notification
+    try {
+      await webpush.sendNotification(subscription, payload);
+      console.log('[sendNotification] ✓ Notification sent OK');
+    } catch (err) {
+      console.error('[sendNotification] ERROR sending notification:', err.message);
+      return res.status(500).json({ error: err.message });
+    }
+
+    // Success response
     return res.json({
       success: true,
-      message: `Sent to ${subs.length} subscribers`,
-      results
+      message: 'Notification sent successfully'
     });
+
   } catch (err) {
     console.error('[sendNotification] Handler error:', err.message);
     return res.status(500).json({ error: 'Internal server error' });
