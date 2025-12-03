@@ -1,0 +1,9 @@
+{
+  "name": "pwa-final",
+  "version": "1.0.0",
+  "description": "PWA with push notifications using Vercel serverless functions",
+  "dependencies": {
+    "web-push": "^3.5.0"
+  },
+  "devDependencies": {}
+}
