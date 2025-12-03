@@ -68,7 +68,7 @@ En la función `DOMContentLoaded`, agrega antes de cargar app.js en index.html:
 ```html
 <script>
   // Definir URL del servidor Vercel (reemplaza con tu proyecto)
-  window.PUSH_SERVER_URL = 'https://tu-proyecto-vercel.vercel.app';
+  window.PUSH_SERVER_URL = 'https://pwa-final-og5z1bo2g-angies-projects-dbc59ae3.vercel.app/';
 </script>
 <script src="app.js"></script>
 ```
