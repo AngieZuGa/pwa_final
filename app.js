@@ -57,11 +57,10 @@ const API_BASE = 'https://jsonplaceholder.typicode.com';
 // `window.PUSH_SERVER_URL` in `index.html`. Falls back to localhost for
 // local dev and the default Vercel URL otherwise.
 const PUSH_SERVER =
-    (typeof window !== 'undefined' && window.PUSH_SERVER_URL) ||
+    ((typeof window !== 'undefined' && window.PUSH_SERVER_URL) ||
     (window.location.hostname === 'localhost'
         ? 'http://localhost:4000'
-        : 'https://pwa-final-beta.vercel.app');
-
+        : 'https://pwa-final-beta.vercel.app')).replace(/\/$/, '');
 // -------------------------------------------------------------
 
 // Sistema de Pestañas
