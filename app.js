@@ -324,11 +324,30 @@ async function subscribeForPush() {
             applicationServerKey: urlBase64ToUint8Array(publicKey)
         });
 
-        await fetch(`${PUSH_SERVER}/subscribe`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ subscription: sub })
-        });
+        // Try /api/subscribe first, fallback to /subscribe
+        const subscribeEndpoints = [`${PUSH_SERVER}/api/subscribe`, `${PUSH_SERVER}/subscribe`];
+        let subscribeOk = false;
+        
+        for (const endpoint of subscribeEndpoints) {
+            try {
+                const resp = await fetch(endpoint, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ subscription: sub })
+                });
+                if (resp.ok) {
+                    subscribeOk = true;
+                    console.log('✓ Subscription sent to:', endpoint);
+                    break;
+                }
+            } catch (err) {
+                console.warn('Failed to subscribe at:', endpoint, err.message);
+            }
+        }
+
+        if (!subscribeOk) {
+            throw new Error('Could not register subscription on any endpoint');
+        }
 
         updatePushStatus('Suscrito');
         showToast('Suscripción a notificaciones completada', 'success');
@@ -341,16 +360,34 @@ async function subscribeForPush() {
 
 async function sendTestPush() {
     try {
-        const resp = await fetch(`${PUSH_SERVER}/sendNotification`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                title: 'Prueba',
-                body: 'Notificación de prueba desde el servidor'
-            })
-        });
+        // Try /api/sendNotification first, fallback to /sendNotification
+        const sendEndpoints = [`${PUSH_SERVER}/api/sendNotification`, `${PUSH_SERVER}/sendNotification`];
+        let sendOk = false;
 
-        if (!resp.ok) throw new Error('Error al enviar notificación');
+        for (const endpoint of sendEndpoints) {
+            try {
+                const resp = await fetch(endpoint, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        title: 'Prueba',
+                        body: 'Notificación de prueba desde el servidor'
+                    })
+                });
+
+                if (resp.ok) {
+                    sendOk = true;
+                    console.log('✓ Test notification sent via:', endpoint);
+                    break;
+                }
+            } catch (err) {
+                console.warn('Failed to send via:', endpoint, err.message);
+            }
+        }
+
+        if (!sendOk) {
+            throw new Error('Could not send notification via any endpoint');
+        }
 
         showToast('Solicitud enviada', 'success');
     } catch (err) {
